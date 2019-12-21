@@ -1,0 +1,9 @@
+#+TITLE: Python 实现的视频播放器
+#+AUTHOR: 白鳥白鳥
+#+DATE: 2019-10-17
+
+* Quick Start
+#+BEGIN_SRC bash
+pip install -r requirements.txt
+python main.py
+#+END_SRC
