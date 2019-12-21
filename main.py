@@ -21,7 +21,7 @@ def play_method(order_method='nr'):
             else:  # 放完了停止
                 have_next = False
         if have_next:
-            s_player.on_player_eos = play_method(order_method)
+            s_media.on_player_eos = play_method(order_method)
 
     # 返回一个可调用的对象
     return _closure_play_method
@@ -32,6 +32,6 @@ if __name__ == '__main__':
     s_window.add_path(r'C:\Users\hakutyou\Videos')
 
     _len = len(s_window.list_media())
-    do_play = play_method(order_method='')
+    do_play = play_method(order_method='n')
     do_play()
     pyglet.app.run()

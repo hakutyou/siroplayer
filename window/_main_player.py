@@ -1,12 +1,14 @@
-import pyglet
 import pathlib
-import pyglet_ffmpeg2
+
 import ffmpeg
+import pyglet
+import pyglet_ffmpeg2
 
 
 class MainPlayer(pyglet.media.Player):
-    width = height = 0
+    x = y = width = height = 0
     source = None
+    # duration = 0
 
     def __init__(self):
         super(MainPlayer, self).__init__()
@@ -22,6 +24,7 @@ class MainPlayer(pyglet.media.Player):
         if debug_play:
             print(do_play)
         self.source = pyglet.media.load(str(do_play))
+        # self.duration = float(ffmpeg.probe(str(do_play))['format']['duration'])
         return
 
     def analyse_path(self, path_index: str):
@@ -58,15 +61,24 @@ class MainPlayer(pyglet.media.Player):
         except ffmpeg.Error:
             return False
 
-    def get_and_set_video_size(self):
+    def get_video_size(self, window_width, window_height):
         if not self.source:  # 未加载文件
             return
         if self.source.video_format is None:  # 音频
             return
 
+        # 真实尺寸
         self.width = self.source.video_format.width
         self.height = self.source.video_format.height
         if self.source.video_format.sample_aspect > 1:
             self.width *= self.source.video_format.sample_aspect
         else:
             self.height /= self.source.video_format.sample_aspect
+        # 缩放
+        width_scale = window_width / self.width  # (800 / 1024) * 1024
+        height_scale = window_height / self.height  # 768 / 600
+        scale = min(width_scale, height_scale)
+        self.width = int(self.width * scale)
+        self.height = int(self.height * scale)
+        self.x = (window_width - self.width) // 2
+        self.y = (window_height - self.height) // 2
