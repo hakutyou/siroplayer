@@ -7,3 +7,11 @@
 pip install -r requirements.txt
 python main.py
 #+END_SRC
+
+* TODO
+#+BEGIN_EXAMPLE
+动态移动播放列表
+无音频时异常处理
+获得当前帧图片
+文字输出到视频
+#+END_EXAMPLE

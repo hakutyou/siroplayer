@@ -5,6 +5,8 @@ from ._main_player import MainPlayer
 
 
 class MainWindow(pyglet.window.Window):
+    trim = False
+
     def __init__(self, caption):
         self.cf = ConfigureLoader()
         self.index = 0
@@ -30,24 +32,51 @@ class MainWindow(pyglet.window.Window):
         self._scale_player()
 
     def on_key_press(self, symbol, modifiers):
-        a = self.player.source
+        # 播放/暂停
         if pyglet.window.key.SPACE == symbol:
             if self.player.playing:
                 self.player.pause()
             else:
                 self.player.play()
             return
-        if pyglet.window.key.T == symbol:
-            print(f'{self.player.time:.2f}s/{self.player.source.duration:.2f}s')  # 打印当前播放时间
-            return
-        if pyglet.window.key.F == symbol:
-            print(f'{self.player.source}')
-            return
-        if pyglet.window.key.RIGHT == symbol:
-            print(self.player.seek(self.player.time + 5))
-            return
+        # 退出
         if pyglet.window.key.Q == symbol:
             self.close()
+        # 微调
+        if symbol in [pyglet.window.key.LCTRL, pyglet.window.key.RCTRL]:
+            self.trim = True
+            return
+        # 查看信息
+        if pyglet.window.key.T == symbol:
+            frame_rate = self.player.source.video_format.frame_rate
+            progress = self.player.time / self.player.source.duration
+            # 打印当前播放时间
+            print(f'Time: {self.player.time:.2f}s/{self.player.source.duration:.2f}s ({progress:.2f}%)')
+            # 打印当前播放帧
+            print(f'Frame: {self.player.time * frame_rate:.1f}/{self.player.source.duration * frame_rate:.1f}')
+            return
+        # 音量
+        if pyglet.window.key.UP == symbol:
+            self.player.volume += 0.02 if self.trim else 0.2
+            return
+        if pyglet.window.key.DOWN == symbol:
+            self.player.volume -= 0.02 if self.trim else 0.2
+            if self.player.volume < 0:
+                self.player.volume = 0
+            return
+        # 快进
+        if pyglet.window.key.RIGHT == symbol:
+            self.player.seek(self.player.time + 0.1 if self.trim else 1)
+            return
+        if pyglet.window.key.LEFT == symbol:
+            self.player.seek(self.player.time - 0.1 if self.trim else 1)
+            return
+
+    def on_key_release(self, symbol, modifiers):
+        # 微调
+        if symbol in [pyglet.window.key.LCTRL, pyglet.window.key.RCTRL]:
+            self.trim = False
+            return
 
     def close(self):
         self.cf.write_data()
@@ -57,7 +86,7 @@ class MainWindow(pyglet.window.Window):
         super(MainWindow, self).close()
 
     def add_path(self, path: str):
-        self.max_index = self.player.analyse_path(path)
+        self.max_index = self.player.append_path(path)
 
     def list_media(self):
         return self.player.play_list

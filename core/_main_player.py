@@ -1,65 +1,46 @@
-import pathlib
-
-import ffmpeg
 import pyglet
 import pyglet_ffmpeg2
+
+from ._playlist import PlayList
 
 
 class MainPlayer(pyglet.media.Player):
     x = y = width = height = 0
     source = None
-    # duration = 0
+    have_next = False
 
     def __init__(self):
         super(MainPlayer, self).__init__()
         pyglet_ffmpeg2.load_ffmpeg()
-        self._play_list = []
+        self._play_list = PlayList()
 
     @property
     def play_list(self):
-        return self._play_list
+        """
+        返回整个列表
+        """
+        return self._play_list.file_list
+
+    def append_path(self, path: str):
+        """
+        刷新或添加一个路径
+        """
+        self._play_list.append_path(path)
+        # TODO: 如果在播放中需要刷新位置
+
+    def remove_path(self, path: str):
+        """
+        删除一个路径
+        """
+        self._play_list.append_path(path, operation='remove')
+        # TODO: 如果在播放中需要刷新位置
 
     def load_source(self, index=0, debug_play=False):
         do_play = self.play_list[index]
         if debug_play:
             print(do_play)
         self.source = pyglet.media.load(str(do_play))
-        # self.duration = float(ffmpeg.probe(str(do_play))['format']['duration'])
         return
-
-    def analyse_path(self, path_index: str):
-        """
-        根据路径（目录或文件）返回所有可播放的文件
-        """
-
-        def _iter_analyse_path(_path_index: pathlib.Path, searched_path=()):
-            result = []
-            if not _path_index.exists():
-                pass
-            elif _path_index.is_file():
-                result.append(_path_index.resolve())
-            elif _path_index.is_dir():
-                for i in _path_index.iterdir():
-                    # 递归防止出现闭环
-                    if i not in searched_path:
-                        result += _iter_analyse_path(i, (searched_path + (_path_index,)))
-            return set(filter(self._is_media_file, result))
-
-        _path = pathlib.Path(path_index)
-        self._play_list += _iter_analyse_path(_path)
-        return len(self._play_list)
-
-    @staticmethod
-    def _is_media_file(file) -> bool:
-        """
-        音频视频文件返回 True
-        无法识别文件返回 False
-        """
-        try:
-            ffmpeg.probe(str(file))
-            return True
-        except ffmpeg.Error:
-            return False
 
     def get_video_size(self, window_width, window_height):
         if not self.source:  # 未加载文件
