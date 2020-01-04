@@ -1,11 +1,36 @@
+import time
+
 import pyglet
 
 from ._configure_loader import ConfigureLoader
 from ._main_player import MainPlayer
 
 
+class Text:
+    font_name = 'Sarasa Mono SC'
+    font_size = 26
+    x = y = None
+    expired = 0
+    text = None
+
+    def __init__(self, x, y):
+        self.set_position(x, y)
+
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
+
+    def set_tips(self, content, timeout=5, anchor_x='center', anchor_y='center'):
+        if self.x is None or self.y is None:
+            return
+        self.expired = time.time() + timeout
+        self.text = pyglet.text.Label(content, font_name=self.font_name, font_size=self.font_size,
+                                      x=self.x, y=self.y, anchor_x=anchor_x, anchor_y=anchor_y)
+
+
 class MainWindow(pyglet.window.Window):
     trim = False
+    tips = {}
 
     def __init__(self, caption):
         self.cf = ConfigureLoader()
@@ -17,13 +42,31 @@ class MainWindow(pyglet.window.Window):
         self.player = MainPlayer()
         self.set_visible(True)
 
+        # 居中字幕
+        self.tips['center'] = Text(x=self.width / 2, y=self.height / 2)
+
+    def play(self):
+        self.player.play()
+        # TODO: media_info 或许有用
+        media_info = self.player.media_info
+        do_play = self.player.do_play
+        self.tips['center'].set_tips(do_play.name, timeout=5)
+
     def on_draw(self):
+        self.clear()
+        # 视频
         if self.player.source and self.player.source.video_format:
-            # 视频
-            self.clear()
             # self.player.get_texture().blit(0, 0)
             self.player.get_texture().blit(
                 self.player.x, self.player.y, width=self.player.width, height=self.player.height)
+        # 文字
+        for tip_label in self.tips:
+            tip = self.tips[tip_label]
+            left_time = tip.expired - time.time()
+            # 渐渐消失
+            if left_time > 0:
+                tip.text.color = (255, 255, 255, int(255 * min(1, left_time)))
+                tip.text.draw()
 
     def on_resize(self, width, height):
         super(MainWindow, self).on_resize(width, height)

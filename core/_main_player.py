@@ -1,3 +1,4 @@
+import ffmpeg
 import pyglet
 import pyglet_ffmpeg2
 
@@ -7,6 +8,7 @@ from ._playlist import PlayList
 class MainPlayer(pyglet.media.Player):
     x = y = width = height = 0
     source = None
+    media_info = None
     have_next = False
 
     def __init__(self):
@@ -36,10 +38,11 @@ class MainPlayer(pyglet.media.Player):
         # TODO: 如果在播放中需要刷新位置
 
     def load_source(self, index=0, debug_play=False):
-        do_play = self.play_list[index]
+        self.do_play = self.play_list[index]
         if debug_play:
-            print(do_play)
-        self.source = pyglet.media.load(str(do_play))
+            print(self.do_play)
+        self.media_info = ffmpeg.probe(str(self.do_play))
+        self.source = pyglet.media.load(str(self.do_play))
         return
 
     def get_video_size(self, window_width, window_height):
